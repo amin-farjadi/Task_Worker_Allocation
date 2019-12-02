@@ -49,7 +49,8 @@ class Worker:
         self.fatigue = 1
 
     def is_penalty(self, task):
-        # to check if the penalty (i.e. skill the worker doesn't have is required by the job)
+        # to check if the penalty
+        # (i.e. skill the worker doesn't have is required by the job)
         return self.penalty in task.jobtype.skills
 
     def skill_score(self, task):

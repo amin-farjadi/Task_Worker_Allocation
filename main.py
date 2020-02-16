@@ -97,12 +97,13 @@ class Queue:
         i=i+1
     
     #1st number of tuple: min cost, 2nd number: task index. 3rd number: resource index
-    resources_min = [(0,0,0) for i in range(col)] 
+    #the higher the score of worker, the better
+    resources_fit = [(0,0,0) for i in range(col)] 
     for j in range(col):
         costs_col = list(costs[:,j])
-        min_cost = min(costs_col)
-        task_idx = costs_col.index(min_cost)
-        resources_min[j] = (min_cost, task_idx, j)
+        max_cost = max(costs_col)
+        task_idx = costs_col.index(max_cost)
+        resources_fit[j] = (max_cost, task_idx, j)
     
-    best_resource_info = sorted(resources_min) #sorted to find resource with least cost
+    best_resource_info = sorted(resources_fit, reverse=True) #sorted to find resource with most cost first
 

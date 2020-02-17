@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+"""
+Updated on Mon Feb 17 14:14:51 2020
+
+@author: amin.farjadi
+"""
+
 class JobDescription:
     """
     Job description provides the skills required
@@ -41,7 +48,6 @@ class Worker:
     This class can also identify how well a worker can perform a task.
     This is done by calculation the "cost".
     The higher the cost, the better that worker can perform said task.
-
     """
 
     def __init__(self, name, skills, penalty):
@@ -54,17 +60,17 @@ class Worker:
     def is_penalty(self, task):
         # to check if the penalty
         # (i.e. skill the worker doesn't have is required by the job)
-        return self.penalty in task.job.skills
+        return self.penalty in task.skills
 
     def skill_score(self, task):
         # list all the matched skills
-        skill_match = list(set(task.job.skills).intersection(self.skills))
+        skill_match = list(set(task.skills).intersection(self.skills))
         # testing if penalty exists
         score = len(skill_match) - self.is_penalty(task)
         return score
 
     def compute_cost(self, task):
-        cost = (self.skill_score(task) ** 1.5) * task.weighting / (self.fatigue)
+        cost = (np.abs(self.skill_score(task)) ** 1.5)*np.sign(self.skill_score(task)) * task.weighting / (self.fatigue)
         return cost
 
 
@@ -89,16 +95,18 @@ class Queue:
         self.remaining_resources = None
     
     def allocate(self):
-        tasks = self.tasks
-        resources = self.resources
-        row, col = (len(tasks), len(resources))
+        tasks = self.tasks #updating array
+        resources = self.resources #updating array
+        row, col = (len(self.tasks), len(self.resources))
         if row == 0:
             raise ValueError('Tasks cannot be empty')
         if col == 0:
             raise ValueError('Resources cannot be empty')
         
-        allocation = pd.DataFrame(columns=['Task', 'Resource'])
-        while (row > 0) or (col > 0): 
+        tasks_allocated = []
+        resources_allocated = []
+        
+        while (row > 0) and (col > 0): 
             #-------------------------------------------------------
             costs= np.zeros((row,col))  #[ [0 for i in range(len(tasks))] for j in range(len(resources)) ]
             i=0 #counter for tasks
@@ -124,18 +132,30 @@ class Queue:
             cost_metric = cost_metric.drop_duplicates(subset='Task_idx', keep='first')
             #No resource repetition
             cost_metric = cost_metric.drop_duplicates(subset='Resource_idx', keep='first')
-            #Allocation and removal
-
+            
+            #Allocation
             for _, df_row in cost_metric.iterrows():
-                task_obj = tasks[int(df_row['Task_idx'])]
-                resource_obj = resources[int(df_row['Resource_idx'])]
-                allocation.append({'Task': task_obj.name, 'Resource': resource_obj.name}, ignore_index=True)
+                task_idx = int(df_row['Task_idx'])
+                resource_idx = int(df_row['Resource_idx'])
+                task_obj = tasks[task_idx]
+                resource_obj = resources[resource_idx]
+                #
+                tasks_allocated.append(task_obj)
+                resources_allocated.append(resource_obj)
                 #increase fatigue of resource
                 resource_obj.fatigue += task_obj.weighting
-                #remove tasks and resources from allocation queue
-                tasks.remove(task_obj)
-                resources.remove(resource_obj)
+                
 
+            #Removal            
+            tasks = [x for x in tasks if x not in tasks_allocated]
+            resources = [x for x in resources if x not in resources_allocated]            
+            #Updating                
+            row, col = (len(tasks), len(resources))
+
+
+        #Creating allocation dataframe
+        allocation = pd.DataFrame({'Task': [x.name for x in tasks_allocated], 'Resource': [x.name for x in resources_allocated]}, columns=['Task','Resource'])
+        #
         if len(tasks)==0 and len(resources)==0:
             pass
         elif len(tasks)==0:
@@ -146,7 +166,7 @@ class Queue:
         return allocation
 
 tasks = [task1, task2, task3]
-resources = [worker1, worker2]
+resources = [worker1, worker2, worker5, worker4]
 q1 = Queue(tasks, resources)
 
 print(q1.allocate())

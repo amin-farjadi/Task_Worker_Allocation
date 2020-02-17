@@ -1,6 +1,6 @@
 {
     "python.pythonPath": "C:\\Users\\farja\\Anaconda3\\python.exe",
-    "python.linting.enabled": false
+    "python.linting.enabled": false,
 
     // Controls if quick suggestions should show up while typing
     "editor.quickSuggestions": {
